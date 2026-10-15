@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: guardianware-command-center
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://guardian_user:guardian_pass_2026@db:5432/guardianware_db
+      - SECRET_KEY=guardianware-enterprise-super-secret-key-2026-xyz987
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./static/reports:/app/static/reports
+      - ./static/snapshots:/app/static/snapshots
+
+  db:
+    image: postgres:16-alpine
+    container_name: guardianware-postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=guardian_user
+      - POSTGRES_PASSWORD=guardian_pass_2026
+      - POSTGRES_DB=guardianware_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guardian_user -d guardianware_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
